@@ -1,0 +1,30 @@
+extern crate rmp_serde;
+
+
+fn round_trip_option_cow() {
+    use std::borrow::Cow;
+    use std::io;
+    use serde::Serialize;
+
+    #[derive(Serialize,Deserialize, Debug, PartialEq, Eq)]
+    struct Foo<'a> {
+        it: Option<Cow<'a, [u8]>>,
+    }
+
+    let orig = Foo { it : None };
+
+    let mut data = vec![];
+    {
+        let mut encode = rmp_serde::encode::Serializer::new(&mut data);
+        orig.serialize(&mut encode).unwrap();
+    }
+
+    let mut decode = rmp_serde::decode::Deserializer::new(io::Cursor::new(&data[..]));
+    let curr : Foo =  serde::Deserialize::deserialize(&mut decode).unwrap();
+
+    assert_eq!(curr, orig);
+}
+
+fn main() {
+    round_trip_option_cow()
+}
